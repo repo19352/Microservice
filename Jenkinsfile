@@ -1,24 +1,40 @@
 pipeline {
     agent any
+    environment {
+         SCANNER_HOME=tool 'sonar-scanner'
+    }
 
     stages {
-        stage('Build & Tag Docker Image') {
+         stage('sonar') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker build -t adijaiswal/emailservice:latest ."
-                    }
-                }
+              withSonarQubeEnv('sonar-server') {
+                sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=emailservice \
+                    -Dsonar.projectKey=emailservice '''
+                   }
             }
         }
-        
-        stage('Push Docker Image') {
+         stage('docker-build') {
+             steps {
+               script {
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        sh "docker build -t emailservice:latest ."
+                       sh  "docker tag emailservice:latest meena835/emailservice:latest"
+                  }
+               }
+            }
+        }
+        stage('trivy') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker push adijaiswal/emailservice:latest "
-                    }
-                }
+              sh  "trivy image --format json -o report.json meena835/emailservice:latest"
+            }
+        }
+         stage('docker-push') {
+             steps {
+               script {
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                       sh  "docker push  meena835/emailservice:latest"
+                  }
+               }
             }
         }
     }
