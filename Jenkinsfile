@@ -9,7 +9,7 @@ pipeline {
             steps {
               withSonarQubeEnv('sonar-server') {
                 sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=adservice \
-                    -Dsonar.projectKey=adservice '''
+                    -Dsonar.projectKey=adservice -Dsonar.java.binaries=. '''
                    }
             }
         }
