@@ -18,7 +18,7 @@ pipeline {
                script {
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
                         sh "docker build -t paymentservice:latest ."
-                       sh  "docker tag shippingservice:latest meena835/paymentservice:latest"
+                       sh  "docker tag paymentservice:latest meena835/paymentservice:latest"
                   }
                }
             }
