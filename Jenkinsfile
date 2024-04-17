@@ -1,25 +1,42 @@
 pipeline {
     agent any
+    environment {
+         SCANNER_HOME=tool 'sonar-scanner'
+    }
 
     stages {
-        stage('Build & Tag Docker Image') {
+         stage('sonar') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker build -t adijaiswal/recommendationservice:latest ."
-                    }
-                }
+              withSonarQubeEnv('sonar-server') {
+                sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=recommendationservice \
+                    -Dsonar.projectKey=recommendationservice '''
+                   }
             }
         }
-        
-        stage('Push Docker Image') {
+         stage('docker-build') {
+             steps {
+               script {
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        sh "docker build -t recommendationservice:latest ."
+                       sh  "docker tag shippingservice:latest meena835/recommendationservice:latest"
+                  }
+               }
+            }
+        }
+        stage('trivy') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker push adijaiswal/recommendationservice:latest "
-                    }
-                }
+              sh  "trivy image --format json -o report.json meena835/recommendationservice:latest"
+            }
+        }
+         stage('docker-push') {
+             steps {
+               script {
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                       sh  "docker push  meena835/recommendationservice:latest"
+                  }
+               }
             }
         }
     }
 }
+
