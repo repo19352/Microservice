@@ -1,24 +1,40 @@
 pipeline {
     agent any
+    environment {
+         SCANNER_HOME=tool 'sonar-scanner'
+    }
 
     stages {
-        stage('Build & Tag Docker Image') {
+         stage('sonar') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker build -t adijaiswal/checkoutservice:latest ."
-                    }
-                }
+              withSonarQubeEnv('sonar-server') {
+                sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=checkoutservice \
+                    -Dsonar.projectKey=checkoutservice '''
+                   }
             }
         }
-        
-        stage('Push Docker Image') {
+         stage('docker-build') {
+             steps {
+               script {
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                        sh "docker build -t checkoutservice:latest ."
+                       sh  "docker tag checkoutservice:latest meena835/checkoutservice:latest"
+                  }
+               }
+            }
+        }
+        stage('trivy') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker push adijaiswal/checkoutservice:latest "
-                    }
-                }
+              sh  "trivy image --format json -o report.json meena835/checkoutservice:latest"
+            }
+        }
+         stage('docker-push') {
+             steps {
+               script {
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                       sh  "docker push  meena835/checkoutservice:latest"
+                  }
+               }
             }
         }
     }
