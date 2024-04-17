@@ -15,8 +15,7 @@ pipeline {
         }
          stage('docker-build') {
              steps {
-               script {
-                   dir('/var/lib/jenkins/workspace/microservice_cartservice/src/') 
+               script { 
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
                         sh "docker build -t cartservice:latest ."
                        sh  "docker tag cartservice:latest meena835/cartservice:latest"
