@@ -18,7 +18,7 @@ pipeline {
                script {
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
                         sh "docker build -t recommendationservice:latest ."
-                       sh  "docker tag shippingservice:latest meena835/recommendationservice:latest"
+                       sh  "docker tag recommendationservice:latest meena835/recommendationservice:latest"
                   }
                }
             }
